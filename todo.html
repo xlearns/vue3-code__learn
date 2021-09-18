@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" href="/favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>todo list</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
+</head>
+<body>
+  <div id="app" style='width:800px'>
+    <input type="text" placeholder="name" class='add_name'><input type="text" placeholder="pirce" class="add_pirce"><input type="text" placeholder="number" class="add_number"><button class='addElement'>添加</button>
+    <table class="table root" ></table>
+    <p class='nodata' style='text-align: center;display: none;'>暂无数据</p>
+    总价：<span class="total"></span>
+  </div>
+  <!-- <button id='btn'>click</button> -->
+  <script  src="./kkb-reactivity.js"></script>
+  <script>
+    const root = document.querySelector(".root")
+    const btn = document.querySelector("#btn")
+    const total = document.querySelector(".total")
+    const input = document.querySelector(".input")
+    const addElement = document.querySelector('.addElement')
+    const nodata = document.querySelector('.nodata')
+    const o = {
+      test:'name',
+      all:0,
+      data:[{
+      id:"1",
+      name:"kkb",
+      number:1,
+      pirce:1
+    },{
+      id:"2",
+      name:"kkb1",
+      number:2,
+      pirce:2
+    }]
+    }
+    let obj = reactive(o)
+    let all = computed(()=>{
+      let sum = 0
+      obj.data.forEach(v=>{
+        sum += v.pirce*v.number
+      })
+        return sum
+      })
+    effect(()=>{
+      //模板
+      let str = `<tr>
+        <th>id</th><th>name</th><th>pirce</th><th>number</th><th>操作</th>
+      </tr>`
+      obj.data.forEach(v=>{
+        str+=`<tr><td>${v.id}</td><td>${v.name}</td><td>${v.pirce}</td><td><button class='sub' id=${v.id}>-</button><span style='color:red;font-size:20px'>${v.number}</span><button class='add' id=${v.id} >+</button></td><td><button class='delete' id=${v.id}>删除</button></td></tr>`
+      })
+      if(obj.data.length<=0){
+        nodata.style.display='block'
+      }else{
+        nodata.style.display='none'
+      }
+      root.innerHTML=str
+      total.innerHTML = all.value
+    })
+    root.addEventListener('click',(el)=>{
+      let element = el.target?.className
+      let id = el.target?.id
+      if(element=='sub'||element=='add'){
+        obj.data = obj.data.map(v=>{
+        if(v.id==id){
+          if(element=='add'){
+              v.number++
+          }else if(element=='sub'){
+              v.number--
+          }
+        }
+        return v
+      })
+      }else if(element=='delete'){
+          obj.data = obj.data.filter(v=>{
+            return v.id!=id
+          })
+      }
+    },false)
+    addElement.addEventListener('click',(el)=>{
+      let name = document.querySelector('.add_name').value
+      let number = document.querySelector('.add_number').value
+      let pirce = document.querySelector('.add_pirce').value
+      if(!name||!number||!pirce){
+        let str = name?number?pirce?'':'pirce':'number':'name'
+        return alert(`${str}不能为空`)
+      }
+      let data = obj.data.slice(0)
+      let length = data.length
+      data.push({
+        id:length+1,
+        name:name,
+        number:number,
+        pirce:pirce
+      })
+      obj.data = data
+      document.querySelector('.add_name').value = ''
+      document.querySelector('.add_number').value = ''
+      document.querySelector('.add_pirce').value = ''
+    })
+  </script>
+</body>
+</html>
