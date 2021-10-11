@@ -1,15 +1,26 @@
 //核心逻辑
 //proxy 在get中收集依赖、在set中触发依赖【执行收集到的effect】。将所有依赖都收集到weakMap中，weakMap中存储的key也就是目标在vue2.x中为watcher在vue3.x中为target
 
+
+/*  
+  //dep中存储这effect
+
+  targetMap【new WeakMap】 {
+      depsMap 【new Map】{
+        effect1【dep】:xx 【new Set】 
+        effect2:xx
+      }
+  }
+*/
 //收集依赖，利用weakMap防止内存泄漏
 let targetMap = new WeakMap()
 
 //存储所有effect
 let effectStack = []
-//收集依赖函数
+//收集依赖
 function track(target,key){
-  //初始化
-  const effect = effectStack[effectStack.length-1] //获取最新的effect
+  //获取最新的effect
+  const effect = effectStack[effectStack.length-1] 
   
   //如果effect存在则说明需要收集
   if(effect){
@@ -28,8 +39,8 @@ function track(target,key){
      //完成初始化
      //开始收集依赖
      if(!dep.has(effect)){
-       //双向缓存
         dep.add(effect)
+        //双向缓存
         effect.deps.push(dep)
      }
   }
@@ -55,9 +66,13 @@ const baseHandler = {
         trigger(target,key,info)  
     }
 }
+//触发依赖
+//1.通过 targetMap 拿到 target 对应的依赖集合 depsMap；
+//2.创建运行的 effects 集合；
+//3.根据 key 从 depsMap 中找到对应的 effects 添加到 effects 集合；
+//4.遍历 effects 执行相关的副作用函数。
 function trigger(target,key,info){
   let depMap = targetMap.get(target)
-  // console.log(target,targetMap)
   if(depMap===undefined)return //没有依赖也就没有副作用
   const effects = new Set()
   const computeds = new Set()  //计算属性特殊的effect 【懒执行】
@@ -74,6 +89,7 @@ function trigger(target,key,info){
   effects.forEach(effect=>effect())
   computeds.forEach(computed=>computed())
 }
+//等同vue2.x中Observer
 function reactive(target){
   const observed = new Proxy(target,baseHandler)
   return observed
